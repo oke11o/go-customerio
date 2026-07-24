@@ -198,7 +198,12 @@ type TransactionalMetricsOptions struct {
 }
 
 // MetricSeries is a set of per-bucket counts, one entry per event kind that
-// applies to the resource being measured.
+// applies to the resource being measured. This is the full superset of
+// fields the App API reports across every metered resource (transactional
+// messages, campaigns, campaign/broadcast actions, broadcasts,
+// newsletters/newsletter content); which fields are actually populated
+// depends on the resource and channel. The StatusCode* fields only apply
+// to webhook actions.
 type MetricSeries struct {
 	Attempted         []int `json:"attempted,omitempty"`
 	Bounced           []int `json:"bounced,omitempty"`
@@ -220,10 +225,17 @@ type MetricSeries struct {
 	Undeliverable     []int `json:"undeliverable,omitempty"`
 	TopicUnsubscribed []int `json:"topic_unsubscribed,omitempty"`
 	Unsubscribed      []int `json:"unsubscribed,omitempty"`
+	StatusCode2xx     []int `json:"2xx,omitempty"`
+	StatusCode3xx     []int `json:"3xx,omitempty"`
+	StatusCode4xx     []int `json:"4xx,omitempty"`
+	StatusCode5xx     []int `json:"5xx,omitempty"`
 }
 
-// TransactionalMetricsResponse is the decoded shape of
-// GET /v1/transactional/{id}/metrics.
+// TransactionalMetricsResponse wraps a MetricSeries report. Despite the
+// name (kept for API stability with where it was first introduced), the
+// App API returns this identical {metric:{series:{...}}} shape for every
+// metered resource, so it's reused as-is by campaign/broadcast/newsletter
+// metrics methods rather than duplicated per resource.
 type TransactionalMetricsResponse struct {
 	Metric struct {
 		Series MetricSeries `json:"series"`
@@ -272,8 +284,9 @@ type LinkMetric struct {
 	} `json:"metric"`
 }
 
-// TransactionalLinkMetricsResponse is the decoded shape of
-// GET /v1/transactional/{id}/metrics/links.
+// TransactionalLinkMetricsResponse wraps per-link click metrics. Like
+// TransactionalMetricsResponse, this shape is shared across every metered
+// resource's .../metrics/links endpoint, not just transactional messages.
 type TransactionalLinkMetricsResponse struct {
 	Links []LinkMetric `json:"links"`
 }
