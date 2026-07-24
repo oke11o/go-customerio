@@ -155,6 +155,7 @@ type TransactionalDeliveriesOptions struct {
 // GET /v1/transactional/{id}/messages.
 type TransactionalDeliveriesResponse struct {
 	Messages []Message `json:"messages"`
+	Next     string    `json:"next,omitempty"`
 }
 
 // GetTransactionalMessageDeliveries returns the messages sent from a
