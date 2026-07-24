@@ -134,26 +134,33 @@ func (c *APIClient) GetCustomerActivities(ctx context.Context, customerID string
 	return &resp, nil
 }
 
-// Message is an entry from GET /v1/customers/{id}/messages — a sent
-// email/push/SMS/etc. and its delivery metadata. Open/click/bounce state is
-// not part of this object; join against GetCustomerActivities (or
-// GetMessage's associations) for delivery lifecycle events.
+// Message is a sent email/push/SMS/etc. and its delivery metadata — the
+// shared shape returned by GET /v1/customers/{id}/messages,
+// GET /v1/transactional/{id}/messages, and GET /v1/messages. Open/click/
+// bounce state is not part of this object; join against
+// GetCustomerActivities (or GetMessage's associations) for delivery
+// lifecycle events.
 type Message struct {
-	ID             string           `json:"id"`
-	DeduplicateID  string           `json:"deduplicate_id,omitempty"`
-	CustomerID     string           `json:"customer_id,omitempty"`
-	CampaignID     int              `json:"campaign_id,omitempty"`
-	ActionID       int              `json:"action_id,omitempty"`
-	Recipient      string           `json:"recipient,omitempty"`
-	Subject        string           `json:"subject,omitempty"`
-	Metrics        map[string]int64 `json:"metrics,omitempty"`
-	Created        int64            `json:"created,omitempty"`
-	FailureMessage string           `json:"failure_message,omitempty"`
-	NewsletterID   *int             `json:"newsletter_id,omitempty"`
-	ContentID      *int             `json:"content_id,omitempty"`
-	BroadcastID    *int             `json:"broadcast_id,omitempty"`
-	Type           string           `json:"type,omitempty"`
-	Forgotten      bool             `json:"forgotten,omitempty"`
+	ID                  string               `json:"id"`
+	DeduplicateID       string               `json:"deduplicate_id,omitempty"`
+	CustomerID          string               `json:"customer_id,omitempty"`
+	CustomerIdentifiers *CustomerIdentifiers `json:"customer_identifiers,omitempty"`
+	CampaignID          int                  `json:"campaign_id,omitempty"`
+	ActionID            int                  `json:"action_id,omitempty"`
+	ParentActionID      *int                 `json:"parent_action_id,omitempty"`
+	TriggerEventID      string               `json:"trigger_event_id,omitempty"`
+	Recipient           string               `json:"recipient,omitempty"`
+	Subject             string               `json:"subject,omitempty"`
+	Metrics             map[string]int64     `json:"metrics,omitempty"`
+	Created             int64                `json:"created,omitempty"`
+	FailureMessage      string               `json:"failure_message,omitempty"`
+	NewsletterID        *int                 `json:"newsletter_id,omitempty"`
+	ContentID           *int                 `json:"content_id,omitempty"`
+	BroadcastID         *int                 `json:"broadcast_id,omitempty"`
+	Type                string               `json:"type,omitempty"`
+	Forgotten           bool                 `json:"forgotten,omitempty"`
+	// TrackedResponses' shape isn't documented; kept opaque rather than guessed.
+	TrackedResponses any `json:"tracked_responses,omitempty"`
 }
 
 // MessagesResponse is the decoded shape of GET /v1/customers/{id}/messages.
