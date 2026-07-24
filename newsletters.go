@@ -35,6 +35,7 @@ type ListNewslettersOptions struct {
 // ListNewslettersResponse is the decoded shape of GET /v1/newsletters.
 type ListNewslettersResponse struct {
 	Newsletters []Newsletter `json:"newsletters"`
+	Next        string       `json:"next,omitempty"`
 }
 
 // ListNewsletters returns every newsletter defined in the workspace.
