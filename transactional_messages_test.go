@@ -116,7 +116,7 @@ func TestGetTransactionalMessageDeliveries(t *testing.T) {
 	}
 
 	tracked := true
-	api, rec := apiServer(t, 200, map[string]any{"messages": []map[string]any{{"id": "m1", "subject": "hi"}}})
+	api, rec := apiServer(t, 200, map[string]any{"messages": []map[string]any{{"id": "m1", "subject": "hi"}}, "next": "cursor2"})
 	got, err := api.GetTransactionalMessageDeliveries(context.Background(), "1", customerio.TransactionalDeliveriesOptions{
 		Metric:              "opened",
 		StartTS:             100,
@@ -130,6 +130,9 @@ func TestGetTransactionalMessageDeliveries(t *testing.T) {
 	assertAPIRequest(t, rec, "GET", "/v1/transactional/1/messages?end_ts=200&get_tracked_responses=true&limit=10&metric=opened&start_ts=100")
 	if len(got.Messages) != 1 {
 		t.Errorf("unexpected response: %#v", got)
+	}
+	if got.Next != "cursor2" {
+		t.Errorf("unexpected next cursor: %#v", got)
 	}
 }
 
