@@ -6,16 +6,19 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	"github.com/customerio/go-customerio/v3"
 )
 
 // apiRecord captures the most recent request made through an apiServer.
+// body is `any` rather than map[string]any since some endpoints
+// (e.g. UpdateCollectionContent) send a top-level JSON array.
 type apiRecord struct {
 	method string
 	path   string
-	body   map[string]any
+	body   any
 }
 
 // apiServer creates a per-test HTTP server and APIClient for App API tests.
@@ -68,11 +71,17 @@ func assertAPIRequest(t *testing.T, rec *apiRecord, method, path string) {
 	}
 }
 
-// assertJSONEqual compares got and want by marshaling both to JSON, rather
-// than reflect.DeepEqual — apiServer decodes request bodies with UseNumber,
-// so a captured numeric field is a json.Number, which never DeepEqual's a
-// float64 literal in a hand-written expectation even when both serialize
-// identically.
+// assertJSONEqual compares got and want by marshaling both to JSON and then
+// unmarshaling into a generic any, rather than comparing raw bytes or using
+// reflect.DeepEqual directly on the inputs. Two round trips are needed: (1)
+// apiServer decodes request bodies with UseNumber, so a captured numeric
+// field is a json.Number, which never DeepEqual's a float64 literal in a
+// hand-written expectation even when both serialize identically; (2) when
+// want is a typed struct, json.Marshal preserves its field declaration
+// order, while got (already a decoded map) always marshals with
+// alphabetically sorted keys — comparing raw bytes would spuriously fail on
+// key order alone. Round-tripping both sides through the same
+// marshal-then-unmarshal-to-any path normalizes both away.
 func assertJSONEqual(t *testing.T, got, want any) {
 	t.Helper()
 	gotJSON, err := json.Marshal(got)
@@ -83,7 +92,16 @@ func assertJSONEqual(t *testing.T, got, want any) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Equal(gotJSON, wantJSON) {
+
+	var gotGeneric, wantGeneric any
+	if err := json.Unmarshal(gotJSON, &gotGeneric); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(wantJSON, &wantGeneric); err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(gotGeneric, wantGeneric) {
 		t.Errorf("body mismatch\nexpected: %s\ngot:      %s", wantJSON, gotJSON)
 	}
 }

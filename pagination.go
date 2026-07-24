@@ -74,3 +74,57 @@ const (
 	SortAscending  SortDirection = "asc"
 	SortDescending SortDirection = "desc"
 )
+
+// DesignStudioFilter is a tri-state filter used by Design Studio list
+// endpoints (is_template/has_translations/is_linked): DesignStudioFilterAny
+// is sent explicitly (unlike the zero value "", which is omitted from the
+// query entirely) to request no filtering — both have the same effect
+// server-side (the API defaults to "any"), but explicit "any" round-trips
+// onto the wire while "" doesn't send the parameter at all.
+type DesignStudioFilter string
+
+const (
+	DesignStudioFilterTrue  DesignStudioFilter = "true"
+	DesignStudioFilterFalse DesignStudioFilter = "false"
+	DesignStudioFilterAny   DesignStudioFilter = "any"
+)
+
+// DesignStudioSortBy selects the sort field for Design Studio list endpoints.
+type DesignStudioSortBy string
+
+const (
+	DesignStudioSortByCreated DesignStudioSortBy = "created"
+	DesignStudioSortByUpdated DesignStudioSortBy = "updated"
+	DesignStudioSortByName    DesignStudioSortBy = "name"
+)
+
+// DesignStudioListOptions filters/sorts/paginates the Design Studio folder,
+// email, and component list endpoints. Field names are Go-idiomatic
+// camelCase but map to snake_case wire query params (e.g. ParentFolderID ->
+// parent_folder_id) — a real mismatch in the underlying API, not
+// inconsistency introduced here.
+type DesignStudioListOptions struct {
+	ParentFolderID        string
+	DirectDescendantsOnly *bool
+	SortBy                DesignStudioSortBy
+	SortOrder             SortDirection
+	CreatedBefore         int64
+	CreatedAfter          int64
+	UpdatedBefore         int64
+	UpdatedAfter          int64
+	Page                  int
+	Limit                 int
+}
+
+func (o DesignStudioListOptions) apply(q *queryBuilder) *queryBuilder {
+	return q.setString("parent_folder_id", o.ParentFolderID).
+		setBool("direct_descendants_only", o.DirectDescendantsOnly).
+		setString("sort_by", string(o.SortBy)).
+		setString("sort_order", string(o.SortOrder)).
+		setInt64("created_before", o.CreatedBefore).
+		setInt64("created_after", o.CreatedAfter).
+		setInt64("updated_before", o.UpdatedBefore).
+		setInt64("updated_after", o.UpdatedAfter).
+		setInt("page", o.Page).
+		setInt("limit", o.Limit)
+}

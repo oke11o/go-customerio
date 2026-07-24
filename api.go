@@ -3,6 +3,7 @@ package customerio
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 )
 
@@ -67,6 +68,30 @@ func (c *APIClient) doJSON(ctx context.Context, verb, requestPath string, body, 
 		}
 	}
 	if !ok {
+		return &CustomerIOError{status: statusCode, url: c.URL + requestPath, body: respBody}
+	}
+
+	if out != nil && len(respBody) > 0 {
+		if err := json.Unmarshal(respBody, out); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// doMultipartJSON is doJSON's counterpart for multipart/form-data uploads —
+// currently only CreateAsset. body/contentType come from a
+// *multipart.Writer (contentType must include its boundary, from
+// FormDataContentType()).
+func (c *APIClient) doMultipartJSON(ctx context.Context, verb, requestPath, contentType string, body io.Reader, out any) error {
+	respBody, statusCode, err := doMultipartHTTP(ctx, c.Client, verb, c.URL+requestPath, c.UserAgent, contentType, body, func(req *http.Request) {
+		req.Header.Set("Authorization", "Bearer "+c.Key)
+	})
+	if err != nil {
+		return err
+	}
+
+	if statusCode != http.StatusOK {
 		return &CustomerIOError{status: statusCode, url: c.URL + requestPath, body: respBody}
 	}
 
