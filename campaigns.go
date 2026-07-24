@@ -94,6 +94,7 @@ type ActionResponse struct {
 // ActionsResponse is the decoded shape of an actions-list endpoint.
 type ActionsResponse struct {
 	Actions []Action `json:"actions"`
+	Next    string   `json:"next,omitempty"`
 }
 
 // GetCampaignActions returns a campaign's actions. start is an opaque
